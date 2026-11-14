@@ -1,0 +1,82 @@
+0/1
+Task 9: 0/1 Knapsack (DP)
+def knap(wt,val,W):
+    n=len(wt); dp=[[0]*(W+1) for _ in range(n+1)]
+    for i in range(1,n+1):
+        for w in range(W+1):
+            dp[i][w]=dp[i-1][w]
+            if wt[i-1]<=w: dp[i][w]=max(dp[i][w],dp[i-1][w-wt[i-1]]+val[i-1])
+    w,it=W,[]
+    for i in range(n,0,-1):
+        if dp[i][w]!=dp[i-1][w]: it.append(i-1); w-=wt[i-1]
+    return dp,it[::-1]
+dp,it=knap([1,3,4,5],[1,4,5,7],7)
+for r in dp: print(r)
+print("Max =",dp[-1][-1],"items",it)
+Task 10: Digit DP (digit sum divisible by K)
+from functools import lru_cache
+def count(N,K):
+    if N<0: return 0
+    D=list(map(int,str(N)))
+    @lru_cache(None)
+    def dp(p,r,t):
+        if p==len(D): return int(r==0)
+        m=D[p] if t else 9
+        return sum(dp(p+1,(r+d)%K,t and d==m) for d in range(m+1))
+    return dp(0,0,True)
+rng=lambda L,R,K: count(R,K)-count(L-1,K)
+brute=lambda L,R,K: sum(sum(map(int,str(x)))%K==0 for x in range(L,R+1))
+for L,R,K in [(1,100,3),(10,99,5),(123,4567,9)]: print(L,R,K,rng(L,R,K),brute(L,R,K))
+print(rng(1,10**18,10))
+Task 11A: KMP String Matching
+def lps(p):
+    L=[0]*len(p); k=0
+    for i in range(1,len(p)):
+        while k and p[i]!=p[k]: k=L[k-1]
+        if p[i]==p[k]: k+=1
+        L[i]=k
+    return L
+def kmp(t,p):
+    L=lps(p); k=0; res=[]
+    for i,c in enumerate(t):
+        while k and c!=p[k]: k=L[k-1]
+        if c==p[k]: k+=1
+        if k==len(p): res.append(i-k+1); k=L[k-1]
+    return res
+print(lps("aabaaab"))
+print(kmp("aaaa","aa"), kmp("abxabcabcaby","abcaby"))
+
+
+
+
+
+
+
+
+
+Task 11B: Trie (insert, search, prefix count, autocomplete)
+class Trie:
+    def __init__(s): s.r=[{},0,False]
+    def insert(s,w):
+        n=s.r
+        for c in w: n=n[0].setdefault(c,[{},0,False]); n[1]+=1
+        n[2]=True
+    def find(s,p):
+        n=s.r
+        for c in p:
+            n=n[0].get(c)
+            if not n: return None
+        return n
+    def search(s,w): n=s.find(w); return bool(n and n[2])
+    def count(s,p): n=s.find(p); return n[1] if n else 0
+    def auto(s,p):
+        out=[]
+        def dfs(n,w):
+            if n[2]: out.append(w)
+            for c in sorted(n[0]): dfs(n[0][c],w+c)
+        n=s.find(p)
+        if n: dfs(n,p)
+        return out
+t=Trie()
+for w in ["apple","app","apply","bat"]: t.insert(w)
+print(t.search("app"),t.search("appl"),t.count("ap"),t.auto("app"))
